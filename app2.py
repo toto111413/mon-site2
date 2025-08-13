@@ -1,36 +1,30 @@
 # app.py - version finale avec onglets + Google Sheets save/load
 import streamlit as st
 import random
+import os
 import json
 import gspread
 from google.oauth2.service_account import Credentials
 import datetime
 
-st.title("Sauvegarde automatique dans Google Sheets")
+# 🔹 Récupérer la clé JSON depuis la variable d'environnement
+service_account_info = json.loads(os.environ["GCP_SERVICE_ACCOUNT_JSON"])
 
-# --- Connexion à Google Sheets via les secrets Streamlit ---
+# 🔹 Connexion à Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
+creds = Credentials.from_service_account_info(service_account_info, scopes=scope)
 client = gspread.authorize(creds)
 
-# --- Ouvrir le Google Sheet ---
+# 🔹 Ouvrir le Google Sheet
 SHEET_NAME = "Nom_de_ton_Google_Sheet"
-sheet = client.open(SHEET_NAME).sheet1  # première feuille
+sheet = client.open(SHEET_NAME).sheet1
 
-# --- Interface utilisateur ---
-nom = st.text_input("Ton nom :")
-message = st.text_area("Message :")
+# 🔹 Exemple d'écriture
+timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+sheet.append_row([timestamp, "Test depuis Google Cloud"])
+print("✅ Donnée envoyée")
 
-if st.button("Sauvegarder maintenant"):
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    sheet.append_row([timestamp, nom, message])
-    st.success("✅ Données sauvegardées dans Google Sheets")
-
-# --- Sauvegarde automatique ---
-if nom and message:
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    sheet.append_row([timestamp, nom, message])
-    st.info("💾 Sauvegarde automatique effectuée")
+st.title("Sauvegarde automatique dans Google Sheets")
 
 # ---------------------------
 # CONFIG PAGE
