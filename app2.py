@@ -716,6 +716,6 @@ elif tab == "Classement":
 # =========================
 st.markdown("---")
 if st.button("💾 Sauvegarder maintenant"):
-    save_current_user_sqlite()
+    save_current_user()
     st.success("Progression sauvegardée.")
 
