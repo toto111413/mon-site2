@@ -234,7 +234,7 @@ elif tab == "Classement":
     else:
         st.write(f"{badge} {joueur} — {points} points")
 
-        st.progress(points / max_points)
+        st.progress(points, max_points)
 
         # Si je ne suis pas dans le top 20 mais j’ai un rang : affiche ma ligne perso
         top_names = {j for j, _ in rows}
