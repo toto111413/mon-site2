@@ -480,7 +480,7 @@ elif tab == "Jeux internes":
                     if st.session_state.consumables.get("rejouer",0) > 0:
                         if st.button("🔄 Utiliser Rejouer (consomme 1)"):
                             consume_item("rejouer")
-                            mots = ["python","streamlit","ordinateur","arcade","programmation","robot"]
+                            mots = ["python","france","ordinateur","Papick","programmation","robot"]
                             st.session_state.mot_original = random.choice(mots)
                             melange = list(st.session_state.mot_original)
                             random.shuffle(melange)
