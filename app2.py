@@ -221,7 +221,7 @@ if "secret_unlocked" not in st.session_state: st.session_state.secret_unlocked =
 
 # Pendu
 if "mot_secret" not in st.session_state:
-    st.session_state.mot_secret = random.choice(["python","famille","ordinateur","jeu","tom","arcade","chat","pizza","robot","streamlit"])
+    st.session_state.mot_secret = random.choice(["python","famille","ordinateur","jeu","tom","arcade","chat","pizza","robot"])
 if "lettres_trouvees" not in st.session_state: st.session_state.lettres_trouvees = []
 if "erreurs" not in st.session_state: st.session_state.erreurs = 0
 if "pendu_hint_used" not in st.session_state: st.session_state.pendu_hint_used = False
@@ -237,7 +237,7 @@ if "mastermind_lost" not in st.session_state: st.session_state.mastermind_lost =
 
 # Mots mélangés
 if "mot_original" not in st.session_state:
-    mots = ["python","streamlit","ordinateur","arcade","programmation","robot"]
+    mots = ["python","chips","ordinateur","Papick","programmation","robot"]
     st.session_state.mot_original = random.choice(mots)
     melange = list(st.session_state.mot_original)
     random.shuffle(melange)
