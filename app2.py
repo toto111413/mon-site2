@@ -125,7 +125,10 @@ else:
 # =========================
 # Navigation
 # =========================
-tab = st.sidebar.selectbox("Navigation", ["Accueil", "Jeux", "Boutique", "Animal", "Classement"])
+tab = st.sidebar.selectbox(
+    "Navigation",
+    ["Accueil", "Jeux internes", "Jeux externes", "Boutique", "Animal", "Succès", "Classement"]
+)
 
 # =========================
 # Accueil
