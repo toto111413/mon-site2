@@ -3,6 +3,15 @@ import streamlit as st
 import random
 import json
 from typing import Dict
+from google.oauth2.service_account import Credentials
+
+import gspread
+from google.oauth2.service_account import Credentials
+import streamlit as st
+
+creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"])
+client = gspread.authorize(creds)
+sheet = client.open("Nom_du_Google_Sheet").sheet1
 
 # --- SAUVEGARDE / GOOGLE SHEETS SETUP ---
 use_sheets = False
