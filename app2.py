@@ -165,13 +165,21 @@ elif tab == "Animal":
     st.write(f"Statut : {st.session_state.pet}")
     st.write(f"XP : {st.session_state.pet_xp}")
 
-# =========================
-# Classement
-# =========================
+# ---------------------------
+# PAGE: CLASSEMENT
+# ---------------------------
 elif tab == "Classement":
     st.header("🏆 Classement des joueurs")
+
+    # Petite fonction pour l’ordinal français
+    def ordinal_fr(n: int) -> str:
+        return f"{n}er" if n == 1 else f"{n}e"
+
+    # Ouvre une connexion dédiée (propre pour cette page)
     conn = sqlite3.connect("sauvegarde.db")
     cur = conn.cursor()
+
+    # Top 20
     cur.execute("""
         SELECT joueur, MAX(points) as pts
         FROM sauvegarde
@@ -180,16 +188,56 @@ elif tab == "Classement":
         LIMIT 20
     """)
     rows = cur.fetchall()
+
+    # Récupère mes infos si j’ai un pseudo
+    me_name = st.session_state.get("player_name", None)
+    me_points = None
+    me_rank = None
+    if me_name:
+        cur.execute("SELECT points FROM sauvegarde WHERE joueur = ?", (me_name,))
+        me_row = cur.fetchone()
+        if me_row:
+            me_points = me_row[0]
+            # Rang = 1 + nb de joueurs qui ont strictement plus de points
+            cur.execute("SELECT COUNT(*) + 1 FROM sauvegarde WHERE points > ?", (me_points,))
+            me_rank = cur.fetchone()[0]
+
     conn.close()
 
     if rows:
-        max_points = max(points for _, points in rows)
+        max_points = max(points for _, points in rows) or 1  # évite division par 0
+
+        st.subheader("Top 20")
         for i, (joueur, points) in enumerate(rows, start=1):
-            medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}ᵉ"
-            st.write(f"{medal} **{joueur}** — {points} points")
+            # Médailles pour 1/2/3
+            if i == 1:
+                badge = "🥇"
+            elif i == 2:
+                badge = "🥈"
+            elif i == 3:
+                badge = "🥉"
+            else:
+                badge = ordinal_fr(i)
+
+            # Surligne ma ligne si je suis dedans
+            if me_name and joueur == me_name:
+                st.markdown(f"**{badge} {joueur} — {points} points**")
+            else:
+                st.write(f"{badge} {joueur} — {points} points")
+
             st.progress(points / max_points)
+
+        # Si je ne suis pas dans le top 20 mais j’ai un rang : affiche ma ligne perso
+        top_names = {j for j, _ in rows}
+        if me_name and (me_points is not None) and (me_name not in top_names):
+            st.markdown("---")
+            st.subheader("Ta position")
+            me_badge = "🥇" if me_rank == 1 else ("🥈" if me_rank == 2 else ("🥉" if me_rank == 3 else ordinal_fr(me_rank)))
+            st.markdown(f"**{me_badge} {me_name} — {me_points} points**")
+            st.progress((me_points / max_points) if max_points else 0.0)
     else:
         st.info("Aucun joueur enregistré pour l’instant.")
+
 
 # =========================
 # Footer
