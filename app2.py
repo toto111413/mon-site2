@@ -229,10 +229,10 @@ elif tab == "Classement":
 
 
             # Surligne ma ligne si je suis dedans
-        if me_name and joueur == me_name:
-            st.markdown(f"**{badge} {joueur} — {points} points**")
-        else:
-            st.write(f"{badge} {joueur} — {points} points")
+    if me_name and joueur == me_name:
+        st.markdown(f"**{badge} {joueur} — {points} points**")
+    else:
+        st.write(f"{badge} {joueur} — {points} points")
 
         st.progress(points / max_points)
 
