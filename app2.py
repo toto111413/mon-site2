@@ -491,7 +491,7 @@ elif tab == "Jeux internes":
                             save_current_user()
                     else:
                         if st.button("Recommencer"):
-                            mots = ["python","streamlit","ordinateur","arcade","programmation","robot"]
+                            mots = ["python","france","ordinateur","Papick","programmation","robot"]
                             st.session_state.mot_original = random.choice(mots)
                             melange = list(st.session_state.mot_original)
                             random.shuffle(melange)
