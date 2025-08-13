@@ -1,4 +1,4 @@
-[media pointer="file-service://file-9csaj3Rk4MPpWkSdGbbqFr"]
+
 # app.py — Version 100% SQLite (compatible Streamlit Cloud)
 import streamlit as st
 import random
