@@ -229,12 +229,12 @@ elif tab == "Classement":
 
 
             # Surligne ma ligne si je suis dedans
-            if me_name and joueur == me_name:
-                st.markdown(f"**{badge} {joueur} — {points} points**")
-            else:
-                st.write(f"{badge} {joueur} — {points} points")
+        if me_name and joueur == me_name:
+            st.markdown(f"**{badge} {joueur} — {points} points**")
+        else:
+            st.write(f"{badge} {joueur} — {points} points")
 
-            st.progress(points / max_points)
+        st.progress(points / max_points)
 
         # Si je ne suis pas dans le top 20 mais j’ai un rang : affiche ma ligne perso
         top_names = {j for j, _ in rows}
