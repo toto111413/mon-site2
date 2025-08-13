@@ -18,8 +18,7 @@ CREATE TABLE IF NOT EXISTS sauvegarde (
 )
 """)
 conn.commit()
-
-    conn.close()
+conn.close()
 
 def db_get_user(name: str) -> Optional[Dict]:
     conn = get_conn()
