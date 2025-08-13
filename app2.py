@@ -188,21 +188,25 @@ elif tab == "Classement":
     rows = cur.fetchall()
     top_names = [r[0] for r in rows]
 
+    # Trouver le score maximum (évite division par zéro)
+    max_points = max((points for _, points in rows), default=0)
+
     # Affichage du top 20
     if rows:
-        max_points = max(points for _, points in rows)
         for i, (joueur, points) in enumerate(rows, start=1):
             medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}ᵉ"
+            if max_points > 0:
+                st.progress(points / max_points)
+            else:
+                st.progress(0)
             st.write(f"{medal} **{joueur}** — {points} points")
-            st.progress(points / max_points)
     else:
         st.info("Aucun joueur enregistré pour l’instant.")
-        max_points = 0
 
-    # Afficher la position du joueur connecté même s'il n'est pas dans le top 20
+    # Afficher la position du joueur connecté
     me_name = st.session_state.get("player_name", None)
     if me_name:
-        save_current_user_sqlite()  # Sauvegarde pour être sûr que c'est en DB
+        save_current_user_sqlite()
         cur.execute("SELECT points FROM sauvegarde WHERE joueur = ?", (me_name,))
         me_row = cur.fetchone()
         if me_row:
@@ -212,40 +216,19 @@ elif tab == "Classement":
         else:
             cur.execute("INSERT INTO sauvegarde (joueur, points) VALUES (?, 0)", (me_name,))
             conn.commit()
-            me_points = 0
-            me_rank = None
+            me_points, me_rank = 0, None
 
         if me_name not in top_names:
             st.markdown("---")
             st.subheader("📌 Ta position")
             me_badge = "🥇" if me_rank == 1 else "🥈" if me_rank == 2 else "🥉" if me_rank == 3 else f"{me_rank}ᵉ"
-            st.write(f"{me_badge} **{me_name}** — {me_points} points")
             if max_points > 0:
                 st.progress(me_points / max_points)
             else:
                 st.progress(0)
+            st.write(f"{me_badge} **{me_name}** — {me_points} points")
 
     conn.close()
-
-
-            # Surligne ma ligne si je suis dedans
-    if me_name and joueur == me_name:
-        st.markdown(f"**{badge} {joueur} — {points} points**")
-    else:
-        st.write(f"{badge} {joueur} — {points} points")
-
-        st.progress(points, max_points)
-
-        # Si je ne suis pas dans le top 20 mais j’ai un rang : affiche ma ligne perso
-        top_names = {j for j, _ in rows}
-        if me_name and (me_points is not None) and (me_name not in top_names):
-            st.markdown("---")
-            st.subheader("Ta position")
-            me_badge = "🥇" if me_rank == 1 else ("🥈" if me_rank == 2 else ("🥉" if me_rank == 3 else ordinal_fr(me_rank)))
-            st.markdown(f"**{me_badge} {me_name} — {me_points} points**")
-            st.progress((me_points / max_points) if max_points else 0.0)
-        else:
-            st.info("Aucun joueur enregistré pour l’instant.")
 
 
 # =========================
