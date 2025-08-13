@@ -2,35 +2,35 @@
 import streamlit as st
 import random
 import json
-from typing import Dict
-from google.oauth2.service_account import Credentials
-
 import gspread
 from google.oauth2.service_account import Credentials
-import streamlit as st
+import datetime
 
-creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"])
+st.title("Sauvegarde automatique dans Google Sheets")
+
+# --- Connexion à Google Sheets via les secrets Streamlit ---
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
 client = gspread.authorize(creds)
-sheet = client.open("Nom_du_Google_Sheet").sheet1
 
-# --- SAUVEGARDE / GOOGLE SHEETS SETUP ---
-use_sheets = False
-gc = None
-sheet = None
-if "GOOGLE_SHEETS_KEY" in st.secrets and "SHEET_NAME" in st.secrets:
-    try:
-        import gspread
-        from google.oauth2.service_account import Credentials
-        creds_dict = json.loads(st.secrets["GOOGLE_SHEETS_KEY"])
-        creds = Credentials.from_service_account_info(creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets"])
-        gc = gspread.authorize(creds)
-        sheet = gc.open(st.secrets["SHEET_NAME"]).sheet1
-        use_sheets = True
-    except Exception as e:
-        st.warning("La connexion Google Sheets a échoué : " + str(e))
-        use_sheets = False
-else:
-    st.info("Google Sheets non configuré dans st.secrets → la sauvegarde automatique est désactivée.")
+# --- Ouvrir le Google Sheet ---
+SHEET_NAME = "Nom_de_ton_Google_Sheet"
+sheet = client.open(SHEET_NAME).sheet1  # première feuille
+
+# --- Interface utilisateur ---
+nom = st.text_input("Ton nom :")
+message = st.text_area("Message :")
+
+if st.button("Sauvegarder maintenant"):
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    sheet.append_row([timestamp, nom, message])
+    st.success("✅ Données sauvegardées dans Google Sheets")
+
+# --- Sauvegarde automatique ---
+if nom and message:
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    sheet.append_row([timestamp, nom, message])
+    st.info("💾 Sauvegarde automatique effectuée")
 
 # ---------------------------
 # CONFIG PAGE
