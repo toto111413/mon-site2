@@ -463,7 +463,7 @@ elif tab == "Jeux internes":
             if (proposition or "").lower() == st.session_state.mot_original:
                 award_points(5, "Mots mélangés gagné")
                 st.session_state.achievements.add("Décodeur")
-                mots = ["python","streamlit","ordinateur","arcade","programmation","robot"]
+                mots = mots = ["python","france","ordinateur","Papick","programmation","robot"]
                 st.session_state.mot_original = random.choice(mots)
                 melange = list(st.session_state.mot_original)
                 random.shuffle(melange)
