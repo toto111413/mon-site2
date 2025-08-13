@@ -1,3 +1,4 @@
+[media pointer="file-service://file-9csaj3Rk4MPpWkSdGbbqFr"]
 # app.py — Version 100% SQLite (compatible Streamlit Cloud)
 import streamlit as st
 import random
@@ -691,4 +692,3 @@ if st.button("💾 Sauvegarder maintenant"):
     st.success("Progression sauvegardée dans la base locale (SQLite).")
 
 st.caption("Version SQLite : onglets, boutique, animal virtuel, succès, et sauvegarde locale persistante.")
-
