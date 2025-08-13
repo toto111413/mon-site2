@@ -4,6 +4,10 @@ import random
 import json
 from typing import Dict
 
+creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"])
+client = gspread.authorize(creds)
+sheet = client.open("Nom_du_Google_Sheet").sheet1
+
 # --- SAUVEGARDE / GOOGLE SHEETS SETUP ---
 use_sheets = False
 gc = None
