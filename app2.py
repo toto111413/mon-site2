@@ -244,8 +244,8 @@ elif tab == "Classement":
             me_badge = "🥇" if me_rank == 1 else ("🥈" if me_rank == 2 else ("🥉" if me_rank == 3 else ordinal_fr(me_rank)))
             st.markdown(f"**{me_badge} {me_name} — {me_points} points**")
             st.progress((me_points / max_points) if max_points else 0.0)
-    else:
-        st.info("Aucun joueur enregistré pour l’instant.")
+        else:
+            st.info("Aucun joueur enregistré pour l’instant.")
 
 
 # =========================
