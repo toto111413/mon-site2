@@ -194,7 +194,7 @@ elif tab == "Classement":
         for i, (joueur, points) in enumerate(rows, start=1):
             medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}ᵉ"
             st.write(f"{medal} **{joueur}** — {points} points")
-            st.progress(points / max_points)
+            st.progress(points, max_points)
     else:
         st.info("Aucun joueur enregistré pour l’instant.")
         max_points = 0
