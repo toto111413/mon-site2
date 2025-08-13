@@ -251,34 +251,25 @@ if "treasure_pos" not in st.session_state:
 if "treasure_attempts" not in st.session_state: st.session_state.treasure_attempts = 6
 if "treasure_found" not in st.session_state: st.session_state.treasure_found = False
 
-# =========================
-# Sidebar & Navigation
-# =========================
+# ---------------------------
+# UI: Onglets (sidebar) + Nom joueur (connexion)
+# ---------------------------
 st.sidebar.header("Joueur")
-player_name = st.sidebar.text_input("Ton pseudo (pour sauvegarder)", key="player_name_input")
-
+player_name = st.sidebar.text_input("Ton pseudo (obligatoire pour sauvegarder)", key="player_name_input")
 if player_name:
     if "player_name" not in st.session_state or st.session_state.player_name != player_name:
         st.session_state.player_name = player_name
-        # Charger depuis la DB si déjà existant, sinon créer une ligne avec l'état courant
-        existing = db_get_user(player_name)
-        if existing:
-            st.session_state.points = existing["points"]
-            st.session_state.consumables = existing["consumables"]
-            st.session_state.has_hat = existing["has_hat"]
-            st.session_state.inventory_list = existing["inventory_list"]
-            st.session_state.achievements = set(existing["achievements"])
-            st.session_state.pet = existing["pet"]
-            st.session_state.pet_xp = existing["pet_xp"]
-            st.success(f"Bienvenue {player_name} — progression chargée.")
-        else:
-            db_upsert_user(get_state_for_saving(player_name))
-            st.success(f"Bienvenue {player_name} — nouveau profil créé.")
+        load_or_create_user_by_name(player_name)
+        st.success(f"Bienvenue {player_name} — progression chargée (si existait).")
 else:
-    st.sidebar.info("Entre un pseudo pour activer la sauvegarde.")
+    st.sidebar.info("Entrez un pseudo pour activer la sauvegarde.")
 
-tab = st.sidebar.selectbox("Navigation", ["Accueil", "Jeux internes", "Jeux externes", "Boutique", "Animal", "Succès"])
+tab = st.sidebar.selectbox(
+    "Navigation",
+    ["Accueil", "Jeux internes", "Jeux externes", "Boutique", "Animal", "Succès", "Classement"]
+)
 
+# Top quick status
 st.markdown(f"**💰 Points : {st.session_state.points} • Inventaire : {', '.join(inventory_display_list()) or 'Aucun'}**")
 
 # =========================
@@ -648,6 +639,52 @@ elif tab == "Succès":
             st.write("•", a)
     else:
         st.write("Aucun succès débloqué pour le moment. Joue pour en obtenir !")
+
+# ---------------------------
+# PAGE: CLASSEMENT
+# ---------------------------
+elif tab == "Classement":
+    st.header("🏆 Classement des joueurs")
+
+    # Récupérer les données depuis SQLite
+    conn = sqlite3.connect("sauvegarde.db")
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT joueur, MAX(points) as pts
+        FROM sauvegarde
+        GROUP BY joueur
+        ORDER BY pts DESC
+        LIMIT 20
+    """)
+    rows = cur.fetchall()
+    conn.close()
+
+    if rows:
+        max_points = max(points for _, points in rows)
+        for i, (joueur, points) in enumerate(rows, start=1):
+            if i == 1:
+                medal = "🥇"
+            elif i == 2:
+                medal = "🥈"
+            elif i == 3:
+                medal = "🥉"
+            else:
+                medal = f"{i}ᵉ"
+
+            st.write(f"{medal} **{joueur}** — {points} points")
+            st.progress(points / max_points)
+    else:
+        st.info("Aucun joueur enregistré pour l’instant.")
+
+# ---------------------------
+# FOOTER (autosave)
+# ---------------------------
+st.markdown("---")
+if st.button("Sauvegarder maintenant"):
+    save_current_user()
+    st.success("Progression sauvegardée (si Google Sheets configuré).")
+
+st.caption("Version finale : onglets, boutique améliorée, animal virtuel, succès, classement visuel, et sauvegarde Google Sheets (optionnelle).")
 
 # =========================
 # Footer / Sauvegarde
