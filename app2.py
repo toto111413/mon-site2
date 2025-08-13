@@ -256,18 +256,35 @@ if "treasure_found" not in st.session_state: st.session_state.treasure_found = F
 # ---------------------------
 st.sidebar.header("Joueur")
 player_name = st.sidebar.text_input("Ton pseudo (obligatoire pour sauvegarder)", key="player_name_input")
+
+# Sauvegarde SQLite
+def load_or_create_user_by_name_sqlite(name: str):
+    """Charge ou crée un joueur dans SQLite."""
+    c.execute("SELECT joueur, points FROM sauvegarde WHERE joueur = ?", (name,))
+    row = c.fetchone()
+    if row:
+        st.session_state.points = row[1]
+    else:
+        c.execute("INSERT INTO sauvegarde (joueur, points) VALUES (?, ?)", (name, st.session_state.points))
+        conn.commit()
+
+def save_current_user_sqlite():
+    """Sauvegarde le joueur actuel dans SQLite."""
+    if "player_name" not in st.session_state or not st.session_state.player_name:
+        return
+    c.execute("UPDATE sauvegarde SET points = ? WHERE joueur = ?", 
+              (st.session_state.points, st.session_state.player_name))
+    conn.commit()
+
 if player_name:
     if "player_name" not in st.session_state or st.session_state.player_name != player_name:
         st.session_state.player_name = player_name
-        load_or_create_user_by_name(player_name)
-        st.success(f"Bienvenue {player_name} — progression chargée (si existait).")
+        load_or_create_user_by_name_sqlite(player_name)
+        st.success(f"Bienvenue {player_name} — progression chargée.")
 else:
     st.sidebar.info("Entrez un pseudo pour activer la sauvegarde.")
 
-tab = st.sidebar.selectbox(
-    "Navigation",
-    ["Accueil", "Jeux internes", "Jeux externes", "Boutique", "Animal", "Succès", "Classement"]
-)
+tab = st.sidebar.selectbox("Navigation", ["Accueil", "Jeux internes", "Jeux externes", "Boutique", "Animal", "Succès"])
 
 # Top quick status
 st.markdown(f"**💰 Points : {st.session_state.points} • Inventaire : {', '.join(inventory_display_list()) or 'Aucun'}**")
@@ -293,7 +310,7 @@ elif tab == "Jeux internes":
             if guess == st.session_state.secret:
                 award_points(5, "Devine le nombre gagné")
                 st.session_state.secret = random.randint(1, 20)
-                save_current_user()
+                save_current_user_sqlite() 
             elif guess < st.session_state.secret:
                 st.info("C'est plus grand !")
             else:
@@ -342,7 +359,7 @@ elif tab == "Jeux internes":
                     st.session_state.pendu_hint_used = True
                     consume_item("indice_pendu")
                     st.success(f"💡 Indice utilisé : la lettre **{chosen}** a été révélée.")
-                    save_current_user()
+                    save_current_user_sqlite()
                 else:
                     st.info("Aucune lettre restante à révéler.")
 
@@ -357,7 +374,7 @@ elif tab == "Jeux internes":
                 elif l in st.session_state.mot_secret:
                     st.session_state.lettres_trouvees.append(l)
                     st.success(f"✅ La lettre **{l}** est dans le mot !")
-                    save_current_user()
+                    save_current_user_sqlite()
                 else:
                     st.session_state.erreurs += 1
                     st.error(f"❌ La lettre **{l}** n'est pas dans le mot.")
@@ -371,7 +388,7 @@ elif tab == "Jeux internes":
             st.session_state.erreurs = 0
             st.session_state.pendu_hint_used = False
             st.session_state.pendu_lost = False
-            save_current_user()
+            save_current_user_sqlite()
 
         # Perdu
         if st.session_state.erreurs >= len(pendu_etapes)-1:
@@ -386,7 +403,7 @@ elif tab == "Jeux internes":
                     st.session_state.pendu_hint_used = False
                     st.session_state.pendu_lost = False
                     st.success("La partie a été réinitialisée (Rejouer utilisé).")
-                    save_current_user()
+                    save_current_user_sqlite()
             else:
                 if st.button("Recommencer"):
                     st.session_state.mot_secret = random.choice(["python","famille","ordinateur","jeu","tom","arcade","chat","pizza","robot","streamlit"])
@@ -394,7 +411,7 @@ elif tab == "Jeux internes":
                     st.session_state.erreurs = 0
                     st.session_state.pendu_hint_used = False
                     st.session_state.pendu_lost = False
-                    save_current_user()
+                    save_current_user_sqlite()
 
     # Mastermind
     elif game == "Mastermind":
@@ -412,7 +429,7 @@ elif tab == "Jeux internes":
                 st.session_state.mastermind_attempts = 6
                 st.session_state.mastermind_hint_used = False
                 st.session_state.mastermind_lost = False
-                save_current_user()
+                save_current_user_sqlite()
             else:
                 st.session_state.mastermind_attempts -= 1
                 if st.session_state.mastermind_attempts <= 0:
@@ -426,14 +443,14 @@ elif tab == "Jeux internes":
                             st.session_state.mastermind_hint_used = False
                             st.session_state.mastermind_lost = False
                             st.success("Rejouer utilisé : nouvelle combinaison.")
-                            save_current_user()
+                            save_current_user_sqlite()
                     else:
                         if st.button("Recommencer"):
                             st.session_state.mastermind_secret = [random.choice(couleurs) for _ in range(4)]
                             st.session_state.mastermind_attempts = 6
                             st.session_state.mastermind_hint_used = False
                             st.session_state.mastermind_lost = False
-                            save_current_user()
+                            save_current_user_sqlite()
 
         # Aide Mastermind (consommable)
         if st.session_state.consumables.get("aide_mastermind",0) > 0 and not st.session_state.mastermind_hint_used:
@@ -461,7 +478,7 @@ elif tab == "Jeux internes":
                 st.session_state.mot_melange = "".join(melange)
                 st.session_state.mots_attempts = 3
                 st.session_state.mots_lost = False
-                save_current_user()
+                save_current_user_sqlite()
             else:
                 st.session_state.mots_attempts -= 1
                 st.warning(f"Incorrect ! Essais restants : {st.session_state.mots_attempts}")
@@ -479,7 +496,7 @@ elif tab == "Jeux internes":
                             st.session_state.mots_attempts = 3
                             st.session_state.mots_lost = False
                             st.success("Rejouer utilisé : nouvelle partie.")
-                            save_current_user()
+                            save_current_user_sqlite()
                     else:
                         if st.button("Recommencer"):
                             mots = ["python","france","ordinateur","Papick","programmation","robot"]
@@ -489,7 +506,7 @@ elif tab == "Jeux internes":
                             st.session_state.mot_melange = "".join(melange)
                             st.session_state.mots_attempts = 3
                             st.session_state.mots_lost = False
-                            save_current_user()
+                            save_current_user_sqlite()
 
     # Mini-jeu secret
     elif game == "Mini-jeu secret":
@@ -508,7 +525,7 @@ elif tab == "Jeux internes":
                     st.session_state.treasure_pos = (random.randint(0,3), random.randint(0,3))
                     st.session_state.treasure_attempts = 6
                     st.session_state.treasure_found = False
-                    save_current_user()
+                    save_current_user_sqlite()
                 else:
                     st.session_state.treasure_attempts -= 1
                     st.warning("Rien ici...")
@@ -518,7 +535,7 @@ elif tab == "Jeux internes":
                             st.session_state.treasure_pos = (random.randint(0,3), random.randint(0,3))
                             st.session_state.treasure_attempts = 6
                             st.session_state.treasure_found = False
-                            save_current_user()
+                            save_current_user_sqlite()
 
 elif tab == "Jeux externes":
     st.header("🌐 Jeux externes")
@@ -565,7 +582,7 @@ elif tab == "Boutique":
                             if art["nom"] not in st.session_state.inventory_list:
                                 st.session_state.inventory_list.append(art["nom"])
                             st.success("🥚 Tu as adopté un œuf ! Va voir la page Animal.")
-                            save_current_user()
+                            save_current_user_sqlite()
                         else:
                             st.error("Pas assez de points.")
             elif art["key"] == "chapeau":
@@ -579,7 +596,7 @@ elif tab == "Boutique":
                             if art["nom"] not in st.session_state.inventory_list:
                                 st.session_state.inventory_list.append(art["nom"])
                             st.success("🎩 Chapeau acheté ! (+1 point bonus par victoire)")
-                            save_current_user()
+                            save_current_user_sqlite()
                         else:
                             st.error("Pas assez de points.")
             else:
@@ -592,7 +609,7 @@ elif tab == "Boutique":
                         if art["nom"] not in st.session_state.inventory_list:
                             st.session_state.inventory_list.append(art["nom"])
                         st.success(f"{art['nom']} ajouté à ton inventaire.")
-                        save_current_user()
+                        save_current_user_sqlite()
                     else:
                         st.error("Pas assez de points.")
 
@@ -620,7 +637,7 @@ elif tab == "Animal":
         if st.button("Caresser (+1 pet XP)"):
             st.session_state.pet_xp += 1
             evolve_pet_if_needed()
-            save_current_user()
+            save_current_user_sqlite()
             st.success("❤️ Le compagnon est content.")
     if st.session_state.consumables.get("boost_animal",0) > 0:
         if st.button("🚀 Utiliser Boost Animal (+10 pet XP)"):
@@ -677,24 +694,12 @@ elif tab == "Classement":
         st.info("Aucun joueur enregistré pour l’instant.")
 
 # ---------------------------
-# FOOTER (autosave)
+# FOOTER (sauvegarde manuelle)
 # ---------------------------
 st.markdown("---")
-if st.button("Sauvegarder maintenant"):
-    save_current_user()
-    st.success("Progression sauvegardée (si Google Sheets configuré).")
-
-st.caption("Version finale : onglets, boutique améliorée, animal virtuel, succès, classement visuel, et sauvegarde Google Sheets (optionnelle).")
-
-# =========================
-# Footer / Sauvegarde
-# =========================
-st.markdown("---")
 if st.button("💾 Sauvegarder maintenant"):
-    save_current_user()
+    save_current_user_sqlite()
     st.success("Progression sauvegardée dans la base locale (SQLite).")
 
 st.caption("Version SQLite : onglets, boutique, animal virtuel, succès, et sauvegarde locale persistante.")
-
-
 
