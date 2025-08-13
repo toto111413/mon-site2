@@ -4,31 +4,21 @@ import random
 import json
 import sqlite3
 from typing import Dict, Optional
+import sqlite3
 
-# =========================
-# Base de données (SQLite)
-# =========================
-def get_conn():
-    # check_same_thread=False pour usage dans Streamlit
-    return sqlite3.connect("sauvegarde.db", check_same_thread=False)
+# Connexion à la base SQLite
+conn = sqlite3.connect("sauvegarde.db", check_same_thread=False)
+c = conn.cursor()
 
-def db_init():
-    conn = get_conn()
-    cur = conn.cursor()
-    # Table des utilisateurs avec toutes les colonnes nécessaires
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        name TEXT PRIMARY KEY,
-        points INTEGER NOT NULL DEFAULT 0,
-        consumables TEXT NOT NULL DEFAULT '{}',      -- JSON dict
-        has_hat INTEGER NOT NULL DEFAULT 0,          -- 0/1
-        inventory_list TEXT NOT NULL DEFAULT '[]',   -- JSON list
-        achievements TEXT NOT NULL DEFAULT '[]',     -- JSON list
-        pet TEXT NOT NULL DEFAULT 'none',
-        pet_xp INTEGER NOT NULL DEFAULT 0
-    )
-    """)
-    conn.commit()
+# Création de la table si elle n'existe pas
+c.execute("""
+CREATE TABLE IF NOT EXISTS sauvegarde (
+    joueur TEXT PRIMARY KEY,
+    points INTEGER
+)
+""")
+conn.commit()
+
     conn.close()
 
 def db_get_user(name: str) -> Optional[Dict]:
