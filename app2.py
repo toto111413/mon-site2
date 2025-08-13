@@ -1,5 +1,21 @@
 import streamlit as st
 import random
+import gspread
+import json
+import streamlit as st
+from google.oauth2.service_account import Credentials
+
+# Charger la clé depuis secrets
+creds_dict = json.loads(st.secrets["GOOGLE_SHEETS_KEY"])
+creds = Credentials.from_service_account_info(creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets"])
+client = gspread.authorize(creds)
+
+# Ouvrir la feuille
+sheet = client.open("sauvegardes_jeu").sheet1
+
+# Exemple d'ajout d'un joueur
+sheet.append_row(["Alice", 120, "[]", "[]", "egg", "15"])
+
 
 # ---------------------------
 # CONFIG PAGE
