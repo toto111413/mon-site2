@@ -3,25 +3,38 @@ import streamlit as st
 import random
 import json
 from typing import Dict
+import sqlite3
 
-# --- SAUVEGARDE / GOOGLE SHEETS SETUP ---
-use_sheets = False
-gc = None
-sheet = None
-if "GOOGLE_SHEETS_KEY" in st.secrets and "SHEET_NAME" in st.secrets:
-    try:
-        import gspread
-        from google.oauth2.service_account import Credentials
-        creds_dict = json.loads(st.secrets["GOOGLE_SHEETS_KEY"])
-        creds = Credentials.from_service_account_info(creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets"])
-        gc = gspread.authorize(creds)
-        sheet = gc.open(st.secrets["SHEET_NAME"]).sheet1
-        use_sheets = True
-    except Exception as e:
-        st.warning("La connexion Google Sheets a échoué : " + str(e))
-        use_sheets = False
-else:
-    st.info("Google Sheets non configuré dans st.secrets → la sauvegarde automatique est désactivée.")
+# Connexion à la base (fichier local)
+conn = sqlite3.connect("sauvegarde.db")
+c = conn.cursor()
+
+# Création de la table si elle n'existe pas
+c.execute("""
+CREATE TABLE IF NOT EXISTS sauvegarde (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    joueur TEXT,
+    points INTEGER
+)
+""")
+conn.commit()
+
+# Sauvegarder un joueur
+def sauvegarder_score(joueur, points):
+    c.execute("INSERT INTO sauvegarde (joueur, points) VALUES (?, ?)", (joueur, points))
+    conn.commit()
+
+# Charger les scores
+def charger_scores():
+    c.execute("SELECT joueur, points FROM sauvegarde ORDER BY points DESC")
+    return c.fetchall()
+
+# Exemple d'utilisation
+sauvegarder_score("Alice", 120)
+sauvegarder_score("Bob", 90)
+
+print(charger_scores())
+
 
 # ---------------------------
 # CONFIG PAGE
