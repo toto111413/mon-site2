@@ -411,8 +411,114 @@ elif tab == "Jeux internes":
                             st.session_state.mastermind_lost = False
                             save_current_user_sqlite()
 
-        # Aide Mastermind (consommable)
-        if st.session_state.consumables.get("aide_mastermind",0) > 0
+        
+                # Aide Mastermind (consommable)
+        if st.session_state.consumables.get("aide_mastermind", 0) > 0 and not st.session_state.mastermind_hint_used:
+            if st.button("🎯 Utiliser Aide Mastermind (révèle une position)"):
+                idx = random.randrange(4)
+                couleur_reelle = st.session_state.mastermind_secret[idx]
+                st.session_state.mastermind_hint_used = True
+                consume_item("aide_mastermind")
+                st.info(f"🎯 Indice : position {idx+1} = **{couleur_reelle}**")
+                save_current_user_sqlite()
+
+    # Mots mélangés
+    elif game == "Mots mélangés":
+        st.subheader("🔀 Mots mélangés")
+        # état initial si besoin
+        if "mot_original" not in st.session_state:
+            mots = ["python", "france", "ordinateur", "Papick", "programmation", "robot"]
+            st.session_state.mot_original = random.choice(mots)
+            mel = list(st.session_state.mot_original)
+            random.shuffle(mel)
+            st.session_state.mot_melange = "".join(mel)
+            st.session_state.mots_attempts = 3
+        if "mots_lost" not in st.session_state:
+            st.session_state.mots_lost = False
+
+        st.write(f"Mot mélangé : **{st.session_state.mot_melange}**")
+        proposition = st.text_input("Votre réponse :", key="mots_input")
+        if st.button("Valider", key="mots_valider"):
+            if (proposition or "").lower() == st.session_state.mot_original:
+                award_points(5, "Mots mélangés gagné")
+                st.session_state.achievements = st.session_state.get("achievements", set())
+                st.session_state.achievements.add("Décodeur")
+                mots = ["python", "france", "ordinateur", "Papick", "programmation", "robot"]
+                st.session_state.mot_original = random.choice(mots)
+                mel = list(st.session_state.mot_original)
+                random.shuffle(mel)
+                st.session_state.mot_melange = "".join(mel)
+                st.session_state.mots_attempts = 3
+                st.session_state.mots_lost = False
+                save_current_user_sqlite()
+            else:
+                st.session_state.mots_attempts -= 1
+                st.warning(f"Incorrect ! Essais restants : {st.session_state.mots_attempts}")
+                if st.session_state.mots_attempts <= 0:
+                    st.error(f"Perdu ! Le mot était : {st.session_state.mot_original}")
+                    st.session_state.mots_lost = True
+                    if st.session_state.consumables.get("rejouer", 0) > 0:
+                        if st.button("🔄 Utiliser Rejouer (consomme 1)", key="mots_rejouer_btn"):
+                            consume_item("rejouer")
+                            mots = ["python", "france", "ordinateur", "Papick", "programmation", "robot"]
+                            st.session_state.mot_original = random.choice(mots)
+                            mel = list(st.session_state.mot_original)
+                            random.shuffle(mel)
+                            st.session_state.mot_melange = "".join(mel)
+                            st.session_state.mots_attempts = 3
+                            st.session_state.mots_lost = False
+                            st.success("Rejouer utilisé : nouvelle partie.")
+                            save_current_user_sqlite()
+                    else:
+                        if st.button("Recommencer", key="mots_restart_btn"):
+                            mots = ["python", "france", "ordinateur", "Papick", "programmation", "robot"]
+                            st.session_state.mot_original = random.choice(mots)
+                            mel = list(st.session_state.mot_original)
+                            random.shuffle(mel)
+                            st.session_state.mot_melange = "".join(mel)
+                            st.session_state.mots_attempts = 3
+                            st.session_state.mots_lost = False
+                            save_current_user_sqlite()
+
+    # Mini-jeu secret
+    elif game == "Mini-jeu secret":
+        # déblocage à 100 pts (pas besoin de flag si tu préfères)
+        secret_unlocked = st.session_state.get("secret_unlocked", False) or (st.session_state.points >= 100)
+        if not secret_unlocked:
+            st.info("Mini-jeu secret débloqué à 100 points.")
+        else:
+            st.subheader("🔒 Mini-jeu secret : Trouve le trésor")
+            # état initial si besoin
+            if "treasure_pos" not in st.session_state:
+                st.session_state.treasure_pos = (random.randint(0, 3), random.randint(0, 3))
+            if "treasure_attempts" not in st.session_state:
+                st.session_state.treasure_attempts = 6
+            if "treasure_found" not in st.session_state:
+                st.session_state.treasure_found = False
+
+            st.write("Tu as 6 essais pour trouver le trésor caché dans une grille 4x4.")
+            st.write(f"Essais restants : {st.session_state.treasure_attempts}")
+            x = st.slider("Choisis X", 0, 3, 0, key="tre_x_internal")
+            y = st.slider("Choisis Y", 0, 3, 0, key="tre_y_internal")
+            if st.button("Creuser", key="tre_dig_btn"):
+                if (x, y) == st.session_state.treasure_pos:
+                    award_points(20, "Trésor trouvé")
+                    st.success("💎 Tu as trouvé le trésor !")
+                    st.session_state.treasure_pos = (random.randint(0, 3), random.randint(0, 3))
+                    st.session_state.treasure_attempts = 6
+                    st.session_state.treasure_found = False
+                    save_current_user_sqlite()
+                else:
+                    st.session_state.treasure_attempts -= 1
+                    st.warning("Rien ici...")
+                    if st.session_state.treasure_attempts <= 0:
+                        st.error(f"Fin des essais ! Le trésor était en {st.session_state.treasure_pos}")
+                        if st.button("Recommencer la chasse", key="tre_restart_btn"):
+                            st.session_state.treasure_pos = (random.randint(0, 3), random.randint(0, 3))
+                            st.session_state.treasure_attempts = 6
+                            st.session_state.treasure_found = False
+                            save_current_user_sqlite()
+
 
 
 # ---------------------------
